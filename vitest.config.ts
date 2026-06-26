@@ -5,6 +5,6 @@ export default defineConfig({
     detectAsyncLeaks: true,
     testTimeout: 5000,
     slowTestThreshold: 10,
-    setupFiles: ['./vitest.setup.js']
+    setupFiles: ['./vitest.setup.ts']
   }
 });

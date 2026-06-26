@@ -12,5 +12,5 @@
     "types": ["node"]
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "tests.test.js", "vitest.*"]
+  "exclude": ["node_modules", "dist", "tests.test.ts", "vitest.*"]
 }

@@ -1,7 +1,7 @@
 import { version as vitestVersion } from 'vitest/package.json';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Promise from 'bluebird';
-import { Pool, TimeoutError } from '.';
+import { Pool, TimeoutError } from './dist/tarn.js';
 
 describe('Tarn', () => {
   let pool = null;
