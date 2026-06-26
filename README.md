@@ -1,3 +1,7 @@
+## tarn.js
+
+Note: This is the actively maintained fork of the original: https://github.com/Vincit/tarn.js
+
 ## Why yet another resource pool?
 
 Tarn is focused on robustness and ability to recover from errors. Tarn has timeouts for all operations
