@@ -44,7 +44,7 @@ export class Pool<T> {
   protected destroyer: (resource: T) => any;
   protected validate: (resource: T) => boolean;
   protected eventId: number;
-  protected emitter = new EventEmitter();
+  protected emitter = new EventEmitter<any>();
 
   constructor(opt: PoolOptions<T>) {
     opt = opt || {};

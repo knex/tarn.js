@@ -161,6 +161,10 @@ pool.removeAllListeners(eventName);
 
 ## Changelog
 
+### 3.1.1 2026-07-08
+
+- Fixes type error with TS 6
+
 ### 3.1.0 2026-06-26
 
 - Addresses timer/promises leaks, adds `settle()` method on resource
