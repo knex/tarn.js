@@ -79,7 +79,19 @@ const pool = new Pool({
   // rejected with the error. If this is false (the default) then
   // create is retried until acquireTimeoutMillis milliseconds has
   // passed.
-  propagateCreateError: false
+  propagateCreateError: false,
+
+  // Order in which free resources are handed back out on acquire.
+  // false (the default) is LIFO: the most recently released resource
+  // is reused first, keeping a small hot set active and letting colder
+  // resources age out via idleTimeoutMillis.
+  // true is FIFO (round-robin): the least recently used free resource
+  // is reused first, cycling evenly across all resources.
+  //
+  // Note: with fifo: true, connections are rotated evenly, so idle
+  // connections rarely reach idleTimeoutMillis; the pool shrinks toward
+  // min far less aggressively than with the default LIFO.
+  fifo: false
 });
 
 // acquires a resource. The promise is rejected with `tarn.TimeoutError`

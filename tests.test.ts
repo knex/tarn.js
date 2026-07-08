@@ -2362,6 +2362,53 @@ describe('Tarn', () => {
       return Math.round(Math.random() * max);
     }
   });
+
+  describe('reuse order (fifo option)', () => {
+    function makePool(opt) {
+      let created = 0;
+      return new Pool({
+        create() {
+          return Promise.resolve({ id: created++ });
+        },
+        destroy() {},
+        min: 0,
+        max: 3,
+        ...opt
+      });
+    }
+
+    it('reuses the most recently released resource by default (LIFO)', async () => {
+      pool = makePool();
+
+      const r0 = await pool.acquire().promise;
+      const r1 = await pool.acquire().promise;
+      const r2 = await pool.acquire().promise;
+      expect([r0.id, r1.id, r2.id]).to.eql([0, 1, 2]);
+
+      pool.release(r0);
+      pool.release(r1);
+      pool.release(r2);
+
+      const reused = await pool.acquire().promise;
+      expect(reused.id).to.equal(2);
+    });
+
+    it('reuses the least recently released resource when fifo is true (round-robin)', async () => {
+      pool = makePool({ fifo: true });
+
+      const r0 = await pool.acquire().promise;
+      const r1 = await pool.acquire().promise;
+      const r2 = await pool.acquire().promise;
+      expect([r0.id, r1.id, r2.id]).to.eql([0, 1, 2]);
+
+      pool.release(r0);
+      pool.release(r1);
+      pool.release(r2);
+
+      const reused = await pool.acquire().promise;
+      expect(reused.id).to.equal(0);
+    });
+  });
 });
 
 function sortBy(arr, key) {

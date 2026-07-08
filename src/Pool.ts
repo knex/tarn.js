@@ -18,6 +18,7 @@ export interface PoolOptions<T> {
   log?: (msg: string) => any;
   validate?: (resource: T) => boolean;
   propagateCreateError?: boolean;
+  fifo?: boolean;
 }
 
 export class Pool<T> {
@@ -33,6 +34,7 @@ export class Pool<T> {
   protected interval: ReturnType<typeof setInterval> | null;
   protected destroyed = false;
   protected propagateCreateError: boolean;
+  protected fifo: boolean;
   protected idleTimeoutMillis: number;
   protected createRetryIntervalMillis: number;
   protected reapIntervalMillis: number;
@@ -119,7 +121,8 @@ export class Pool<T> {
       idleTimeoutMillis: true,
       reapIntervalMillis: true,
       createRetryIntervalMillis: true,
-      propagateCreateError: true
+      propagateCreateError: true,
+      fifo: true
     };
 
     for (const key of Object.keys(opt)) {
@@ -140,6 +143,7 @@ export class Pool<T> {
     this.reapIntervalMillis = opt.reapIntervalMillis || 1000;
     this.createRetryIntervalMillis = opt.createRetryIntervalMillis || 200;
     this.propagateCreateError = !!opt.propagateCreateError;
+    this.fifo = !!opt.fifo;
 
     this.min = opt.min;
     this.max = opt.max;
@@ -400,7 +404,7 @@ export class Pool<T> {
       // on validation result to either leave the free resource to used resources array
       // or destroy the free resource if validation did fail.
       const pendingAcquire = this.pendingAcquires.shift();
-      const free = this.free.pop();
+      const free = this.fifo ? this.free.shift() : this.free.pop();
 
       if (free === undefined || pendingAcquire === undefined) {
         const errMessage = 'this.free was empty while trying to acquire resource';
