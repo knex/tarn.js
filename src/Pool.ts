@@ -444,17 +444,17 @@ export class Pool<T> {
               if (!validationSuccess) {
                 free.settle();
                 this._destroy(free.resource);
-
-                // Since we destroyed an invalid resource and were not able to fulfill
-                // all the pending acquires, we may need to create new ones or at
-                // least run this acquire loop again to verify it. But not immediately
-                // to prevent starving event loop.
-                setTimeout(() => {
-                  this._tryAcquireOrCreate();
-                }, 0);
               } else {
                 this.free.push(free);
               }
+
+              // Since we destroyed an invalid resource or returned a valid one to the
+              // pool without fulfilling this acquire, we may need to create new ones or
+              // at least run this acquire loop again to serve the other pending
+              // acquires. But not immediately to prevent starving event loop.
+              setTimeout(() => {
+                this._tryAcquireOrCreate();
+              }, 0);
 
               // is acquire was canceled, failed or timed out already
               // no need to return it to pending queries

@@ -34,6 +34,10 @@ export class PendingOperation<T> {
   }
 
   reject(err: Error) {
+    // Set the flag right away. The catch handler in the constructor only runs a few
+    // microtasks later, and code that checks the flag in between must not treat this
+    // operation as still pending.
+    this.isRejected = true;
     this.deferred.reject(err);
   }
 

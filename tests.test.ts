@@ -1022,6 +1022,57 @@ describe('Tarn', () => {
       });
   });
 
+  it('should not leak the reserved resource if abort() is called while it is being validated', async () => {
+    pool = new Pool({
+      create: () => Promise.resolve({ a: 0 }),
+      destroy() {},
+      min: 0,
+      max: 1,
+      acquireTimeoutMillis: 200
+    });
+
+    pool.release(await pool.acquire().promise);
+
+    const acquire = pool.acquire();
+
+    // the free resource is reserved for the acquire synchronously; abort it a couple
+    // of microtasks later, before the validation of the resource has completed
+    await null;
+    await null;
+    acquire.abort();
+
+    await acquire.promise.catch(err => {
+      expect(err.message).to.equal('aborted');
+    });
+    await Promise.delay(10);
+
+    expect(pool.numUsed()).to.equal(0);
+    expect(pool.numFree()).to.equal(1);
+    expect(await pool.acquire().promise).to.eql({ a: 0 });
+  });
+
+  it('should give the reserved resource to the next pending acquire if the first one is aborted', async () => {
+    pool = new Pool({
+      create: () => Promise.resolve({ a: 0 }),
+      destroy() {},
+      min: 0,
+      max: 1,
+      acquireTimeoutMillis: 200
+    });
+
+    pool.release(await pool.acquire().promise);
+
+    const first = pool.acquire();
+    const second = pool.acquire();
+    first.abort();
+
+    await first.promise.catch(err => {
+      expect(err.message).to.equal('aborted');
+    });
+
+    expect(await second.promise).to.eql({ a: 0 });
+  });
+
   describe('release', () => {
     it('release should release a resource', () => {
       let createCalled = 0;
