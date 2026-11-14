@@ -566,6 +566,10 @@ export class Pool<T> {
         remove(this.pendingCreates, pendingCreate);
         this.free.push(new Resource(resource));
 
+        // The acquire that triggered this create may have timed out or been aborted
+        // already, in which case nothing else would start reaping this resource.
+        this._startReaping();
+
         // Not returned on purpose.
         pendingCreate.resolve(resource);
         this._executeEventHandlers('createSuccess', eventId, resource);

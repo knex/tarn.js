@@ -1721,6 +1721,36 @@ describe('Tarn', () => {
       return dfd.promise;
     });
 
+    it('should remove an idle resource that was created after its acquire timed out', async () => {
+      let destroyCalled = 0;
+
+      pool = new Pool({
+        create: () => Promise.delay(60).then(() => ({ a: 0 })),
+        destroy() {
+          ++destroyCalled;
+        },
+        min: 0,
+        max: 1,
+        acquireTimeoutMillis: 20,
+        idleTimeoutMillis: 50,
+        reapIntervalMillis: 10
+      });
+
+      await pool.acquire().promise.catch(err => {
+        expect(err).to.be.an.instanceof(TimeoutError);
+      });
+
+      // the resource finishes creating after the acquire has timed out
+      await Promise.delay(60);
+      expect(pool.numFree()).to.equal(1);
+      expect(destroyCalled).to.equal(0);
+
+      await Promise.delay(100);
+      expect(destroyCalled).to.equal(1);
+      expect(pool.numFree()).to.equal(0);
+      expect(pool.interval).to.equal(null);
+    });
+
     it('should always keep opt.min resources', async () => {
       let createCalled = 0;
       let destroyCalled = 0;
