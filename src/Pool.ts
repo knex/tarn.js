@@ -558,7 +558,9 @@ export class Pool<T> {
     callbackOrPromise<T>(this.creator)
       .then(resource => {
         if (pendingCreate.isRejected) {
-          this.destroyer(resource);
+          // Go through _destroy so that a failing destroyer is logged instead of
+          // leaking out as an unhandled rejection.
+          this._destroy(resource);
           pendingCreate.resolve(resource);
           return null;
         }

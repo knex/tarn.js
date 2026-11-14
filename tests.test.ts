@@ -1411,6 +1411,35 @@ describe('Tarn', () => {
           expect(resources[3].destroyed).to.be.ok;
         });
     });
+
+    it('should handle a destroyer error for a resource that was created after createTimeoutMillis', async () => {
+      const logged = [];
+      const destroyFails = [];
+
+      pool = new Pool({
+        create: () => Promise.delay(60).then(() => ({ a: 0 })),
+        destroy: () => Promise.reject(new Error('destroy failed')),
+        min: 0,
+        max: 1,
+        createTimeoutMillis: 20,
+        acquireTimeoutMillis: 40,
+        log: msg => logged.push(msg)
+      });
+
+      pool.on('destroyFail', (eventId, resource, err) => destroyFails.push(err.message));
+
+      await pool.acquire().promise.catch(err => {
+        expect(err).to.be.an.instanceof(TimeoutError);
+      });
+
+      // wait until the late resource has been created and destroyed
+      await Promise.delay(60);
+
+      expect(destroyFails).to.eql(['destroy failed']);
+      expect(logged.some(msg => msg.includes('resource destroyer threw an exception'))).to.equal(
+        true
+      );
+    });
   });
 
   describe('acquireTimeout', () => {
